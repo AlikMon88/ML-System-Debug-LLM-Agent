@@ -1,0 +1,122 @@
+[
+  {
+    "incident_id": 1,
+    "symptom": "Model accuracy dropped significantly after deployment",
+    "root_cause": "Data distribution shift between training and production",
+    "resolution": "Retrain model with updated production data and monitor feature distributions"
+  },
+  {
+    "incident_id": 2,
+    "symptom": "Training process crashes with CUDA out of memory error",
+    "root_cause": "Batch size too large for available GPU memory",
+    "resolution": "Reduce batch size or use gradient accumulation"
+  },
+  {
+    "incident_id": 3,
+    "symptom": "Model outputs NaN loss during training",
+    "root_cause": "Exploding gradients or invalid input values",
+    "resolution": "Apply gradient clipping and validate input data"
+  },
+  {
+    "incident_id": 4,
+    "symptom": "Inference API latency increased suddenly",
+    "root_cause": "High request load without autoscaling",
+    "resolution": "Enable autoscaling and optimize inference pipeline"
+  },
+  {
+    "incident_id": 5,
+    "symptom": "Model predictions biased toward a single class",
+    "root_cause": "Class imbalance in training data",
+    "resolution": "Use class weighting or resample dataset"
+  },
+  {
+    "incident_id": 6,
+    "symptom": "Out of memory (OOM) error during data preprocessing",
+    "root_cause": "Large dataset loaded entirely into memory",
+    "resolution": "Use batch processing or streaming data pipelines"
+  },
+  {
+    "incident_id": 7,
+    "symptom": "Model performs well offline but poorly in production",
+    "root_cause": "Training-serving skew due to inconsistent preprocessing",
+    "resolution": "Ensure identical preprocessing in training and inference pipelines"
+  },
+  {
+    "incident_id": 8,
+    "symptom": "Gradual decline in model performance over time",
+    "root_cause": "Concept drift in underlying data",
+    "resolution": "Implement periodic retraining and monitoring"
+  },
+  {
+    "incident_id": 9,
+    "symptom": "Prediction service returns intermittent errors",
+    "root_cause": "Unstable upstream data source",
+    "resolution": "Add retry logic and input validation"
+  },
+  {
+    "incident_id": 10,
+    "symptom": "Feature importance drastically changes after retraining",
+    "root_cause": "Feature engineering pipeline inconsistency",
+    "resolution": "Audit and standardize feature pipeline"
+  },
+  {
+    "incident_id": 11,
+    "symptom": "Model training is extremely slow",
+    "root_cause": "Inefficient data loading or lack of parallelism",
+    "resolution": "Optimize data loader and use multiprocessing"
+  },
+  {
+    "incident_id": 12,
+    "symptom": "Model fails on edge cases in production",
+    "root_cause": "Insufficient representation of edge cases in training data",
+    "resolution": "Augment dataset with edge case examples"
+  },
+  {
+    "incident_id": 13,
+    "symptom": "Predictions contain unexpected null values",
+    "root_cause": "Missing or corrupted input features",
+    "resolution": "Implement input validation and imputation strategies"
+  },
+  {
+    "incident_id": 14,
+    "symptom": "API throughput drops under heavy load",
+    "root_cause": "Single-threaded inference pipeline",
+    "resolution": "Enable parallel processing or batching"
+  },
+  {
+    "incident_id": 15,
+    "symptom": "Model overfits training data",
+    "root_cause": "Model too complex or insufficient regularization",
+    "resolution": "Apply regularization techniques and cross-validation"
+  },
+  {
+    "incident_id": 16,
+    "symptom": "GPU utilization remains low during training",
+    "root_cause": "Data loading bottleneck",
+    "resolution": "Optimize data pipeline and use prefetching"
+  },
+  {
+    "incident_id": 17,
+    "symptom": "Deployment fails due to missing dependencies",
+    "root_cause": "Inconsistent environment configuration",
+    "resolution": "Use containerization or environment management tools"
+  },
+  {
+    "incident_id": 18,
+    "symptom": "Model predictions are inconsistent across runs",
+    "root_cause": "Random seed not fixed",
+    "resolution": "Set random seeds for reproducibility"
+  },
+  {
+    "incident_id": 19,
+    "symptom": "Inference results differ from validation results",
+    "root_cause": "Mismatch in preprocessing or feature scaling",
+    "resolution": "Align preprocessing steps across environments"
+  },
+  {
+    "incident_id": 20,
+    "symptom": "Model crashes when handling large inputs",
+    "root_cause": "Input size exceeds model capacity",
+    "resolution": "Implement input truncation or batching"
+  }
+]

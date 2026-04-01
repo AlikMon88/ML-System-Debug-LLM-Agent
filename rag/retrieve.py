@@ -1,0 +1,34 @@
+def build_rag_chain(vector_store, llm):
+    # Retrieve top 2 most similar past incidents
+    retriever = vector_store.as_retriever(search_kwargs={"k": 2})
+    
+    system_prompt = """You are an AI ML Site Reliability Engineer.
+    Based on the following historical incidents from our company:
+    
+    <context>
+    {context}
+    </context>
+    
+    Diagnose the user's issue: {query}
+    
+    Structure your response as follows:
+    **Possible Causes:** (List based on context)
+    **Suggested Fixes:** (Actionable steps based on context)
+    """
+    
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", system_prompt),
+        ("human", "{query}")
+    ])
+    
+    def format_docs(docs):
+        return "\n\n".join(doc.page_content for doc in docs)
+    
+    # LCEL Chain: Retrieve context -> Inject to Prompt -> LLM -> String Output
+    rag_chain = (
+        {"context": retriever | format_docs, "query": RunnablePassthrough()}
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
+    return rag_chain
