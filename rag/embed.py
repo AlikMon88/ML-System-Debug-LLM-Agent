@@ -1,11 +1,14 @@
-import os
-import json
-from dotenv import load_dotenv
-from langchain_core.documents import Document
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
+# def create_vector_store(documents):
+#     # Using OpenAI's optimized embedding model
+#     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+#     vector_store = FAISS.from_documents(documents, embeddings)
+#     return vector_store
 
 def create_vector_store(documents):
-    # Using OpenAI's optimized embedding model
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     vector_store = FAISS.from_documents(documents, embeddings)
     return vector_store

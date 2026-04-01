@@ -1,6 +1,10 @@
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+
 def build_rag_chain(vector_store, llm):
     # Retrieve top 2 most similar past incidents
-    retriever = vector_store.as_retriever(search_kwargs={"k": 2})
+    retriever = vector_store.as_retriever(search_kwargs={"k": 2}) ## similarity_match and doc-stringified retrieval
     
     system_prompt = """You are an AI ML Site Reliability Engineer.
     Based on the following historical incidents from our company:
