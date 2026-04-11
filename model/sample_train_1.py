@@ -38,7 +38,7 @@ def train_dummy_model():
     print("\n Training Complete. Saved 'model.pt' and 'training_logs.json'.")
     
     print("Launching <Parallel> ...")
-    subprocess.Popen(["streamlit", "run", "app.py"])
+    subprocess.Popen(["streamlit", "run", "main_stream.py"])
 
 if __name__ == "__main__":
     train_dummy_model()

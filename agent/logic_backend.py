@@ -32,8 +32,9 @@ def route_query(query: str, llm) -> str:
 
 
 ### Tooling (JSON-model-Schema) / MCP-like
+
 @tool
-def read_training_logs(filepath: str = "training_logs.json"):
+def read_training_logs(filepath: str = "model/logs/training_logs.json"):
     """Reads the JSON log file from the recent training run to check metrics like loss and gradients."""
     if not os.path.exists(filepath):
         return "Error: Log file not found."
@@ -50,6 +51,10 @@ def run_shap_analysis(model_path: str = "model.pt"):
     - Feature 'edges' importance: 2%
     Conclusion: Model is ignoring spatial context and over-relying on center pixels (Memorization/Overfitting)."""
 
+# @tool
+# def main_run_shap_analysis(model_path: str = "model.pt"):
+#     pass
+    
 @tool
 def search_framework_docs(query: str):
     """Searches PyTorch/TensorFlow documentation for fixes to ML issues."""
@@ -57,6 +62,9 @@ def search_framework_docs(query: str):
     if "overfit" in query.lower() or "val loss" in query.lower():
         return "DocSnippet [PyTorch]: To combat overfitting and memorization, apply `nn.Dropout(p=0.5)` to fully connected layers and utilize `torchvision.transforms` for data augmentation."
     return "No relevant documentation found."
+
+# def main_search_framework_docs(query: str):
+#     pass
 
 @tool
 def search_db_files(query): ##for categorical-routing
@@ -77,6 +85,8 @@ def search_db_files(query): ##for categorical-routing
         vector_embed_cache[key] = create_vector_store(documents) ## BERT-based embedding-vector (encoder-architechture)
         print('vector-embed-shape: ', vector_embed_cache[key].index.ntotal, vector_embed_cache[key].index.d)
 
+    llm = load_llm(model_name='openai')
+    
     category = route_query(query, llm)
     selected_vs = vector_embed_cache[category]
     retriever = selected_vs.as_retriever(search_kwargs={"k": 2})

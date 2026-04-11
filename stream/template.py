@@ -57,10 +57,10 @@ def stream_frontend(load_vector_embed, load_llm):
             
             
 ### Parallel-Stream-FrontEnd
-def stream_frontend_parallel(load_vector_embed, load_llm):
+def stream_frontend_parallel(load_llm):
     st.set_page_config(page_title="Parallel | ML-SYS-DBG", page_icon="⚙️")
 
-    st.title(" < Parallel | Autonomous ML Semantic/Debugging Assist. > ")
+    st.title(" << Parallel | Auto. ML SDG Assist. >> ")
     # st.markdown("Enter your ML pipeline issue below. The agent will route your query to the correct specialized database ([COMPUTE] / [DATA] / [CODE]) and retrieve historical fixes.")
 
     with st.spinner("Initializing LLM Model ..."):
@@ -82,25 +82,29 @@ def stream_frontend_parallel(load_vector_embed, load_llm):
         4. Generate a comphrehensive root cause analysis report.
         """
         
-    with st.spinner("Parallel: AI Agent analyzing the recent training run ... "):
-        response = st.session_state.agent.invoke({"messages": [HumanMessage(content=intitial_instruction)]})
-        final_report = response["messages"][-1].content
-        st.session_state.chat_history.apppend(AIMessage(content=final_report))
+        with st.status("Parallel: AI Agent analyzing the recent training run ... ", expanded=True) as status:
+            ### Expand and discretize the tooling pipelining
+            response = st.session_state.agent.invoke({"messages": [HumanMessage(content=intitial_instruction)]})
+            final_report = response["messages"][-1].content
+            st.session_state.chat_history.append(AIMessage(content=final_report))
+            status.update(label="Diagnosis Complete!", state="complete", expanded=False)
+
         
     for msg in st.session_state.chat_history:
         role = "user" if isinstance(msg, HumanMessage) else "assistant"
         with st.chat_message(role):
             st.markdown(msg.content)
 
-    # HUMAN-IN-THE-LOOP CHAT
-    if user_input := st.chat_input("Ask follow-up debugging questions..."):
-        st.chat_message("user").markdown(user_input)
-        st.session_state.chat_history.append(HumanMessage(content=user_input))
-        
-        with st.spinner("Agent thinking..."):
-            response = st.session_state.agent.invoke({"messages": st.session_state.chat_history})
-            agent_reply = response["messages"][-1]
-            st.chat_message("assistant").markdown(agent_reply.content)
-            st.session_state.chat_history.append(agent_reply)
+    if 'agent_call' in st.session_state:
+        # HUMAN-IN-THE-LOOP CHAT
+        if user_input := st.chat_input("Ask follow-up debugging questions..."):
+            st.chat_message("user").markdown(user_input)
+            st.session_state.chat_history.append(HumanMessage(content=user_input))
+            
+            with st.spinner("Agent thinking..."):
+                response = st.session_state.agent.invoke({"messages": st.session_state.chat_history})
+                agent_reply = response["messages"][-1]
+                st.chat_message("assistant").markdown(agent_reply.content)
+                st.session_state.chat_history.append(agent_reply)
 
     

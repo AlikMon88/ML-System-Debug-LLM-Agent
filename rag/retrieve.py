@@ -52,4 +52,4 @@ def get_debugging_agent(llm, tools_pack):
     
     ## we add the vector-scoresDB + other SHAP/Perf-metrics-loggers in Tool-Pack
     # create_react_agent automatically handles the "Loop until tools are done" logic
-    return create_react_agent(llm, tools_pack, state_modifier=system_prompt)
+    return create_react_agent(llm, tools_pack, prompt=system_prompt)
