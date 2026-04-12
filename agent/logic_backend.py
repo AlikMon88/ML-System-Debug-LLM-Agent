@@ -47,82 +47,141 @@ def read_training_logs(filepath: str = "model/logs/training_logs.json"):
         data = json.load(f)
     return json.dumps(data)
 
-@tool
-def fetch_telemetry_db(db_path: str = "telemetry.db") -> str:
-    """Reads the actual SQLite database to fetch training losses and gradient norms."""
-    if not os.path.exists(db_path):
-        return "Error: Database not found."
-    
-    conn = sqlite3.connect(db_path)
-    df = pd.read_sql_query("SELECT * FROM metrics", conn)
-    return "Training Telemetry Database Outputs:\n" + df.to_string()
 
 # @tool
-# def run_shap_analysis(model_path: str = "model.pt"):
-#     """Runs SHAP feature importance analysis on a saved model checkpoint."""
-#     # Simulating a heavy SHAP computation
-#     return """SHAP Execution Complete: 
-#     - Feature 'pixel_cluster_center' importance: 88% (Abnormally high)
-#     - Feature 'edges' importance: 2%
-#     Conclusion: Model is ignoring spatial context and over-relying on center pixels (Memorization/Overfitting)."""
+# def fetch_telemetry_db(db_path: str = "telemetry.db") -> str:
+#     """Reads the actual SQLite database to fetch training losses and gradient norms."""
+#     if not os.path.exists(db_path):
+#         return "Error: Database not found."
+    
+#     conn = sqlite3.connect(db_path)
+#     df = pd.read_sql_query("SELECT * FROM metrics", conn)
+#     return "Training Telemetry Database Outputs:\n" + df.to_string()
 
 @tool
-def main_run_shap_analysis(model_path: str = "model.pth"):
-    """Runs actual SHAP DeepExplainer to identify which image regions drive model predictions."""
-    try:
-        
-        model = SimpleNN()
-        model.load_state_dict(torch.load(model_path, weights_only=True))
-        model.eval()
+def run_shap_analysis(model_path: str = "model.pt"):
+    """Runs SHAP feature importance analysis on a saved model checkpoint."""
+    # Simulating a heavy SHAP computation
+    return """SHAP Execution Complete: 
+    - Feature 'pixel_cluster_center' importance: 88% (Abnormally high)
+    - Feature 'edges' importance: 2%
+    Conclusion: Model is ignoring spatial context and over-relying on center pixels (Memorization/Overfitting)."""
 
-        # Load Sample Data (100 background samples, 10 test samples to keep it fast)
-        transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
-        test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+# @tool
+# def main_run_shap_analysis(model_path: str = "model.pth"):
+#     """Runs actual SHAP DeepExplainer to identify which image regions drive model predictions."""
+#     try:
         
-        background = torch.stack([test_dataset[i][0] for i in range(100)])
-        test_samples = torch.stack([test_dataset[i][0] for i in range(100, 110)])
+#         model = SimpleNN()
+#         model.load_state_dict(torch.load(model_path, weights_only=True))
+#         model.eval()
 
-        # Run Real SHAP DeepExplainer
-        explainer = shap.DeepExplainer(model, background)
-        shap_values = explainer.shap_values(test_samples)
+#         # Load Sample Data (100 background samples, 10 test samples to keep it fast)
+#         transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+#         test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+        
+#         background = torch.stack([test_dataset[i][0] for i in range(100)])
+#         test_samples = torch.stack([test_dataset[i][0] for i in range(100, 110)])
 
-        # TRANSLATE TO LLM TEXT: Aggregate spatial importance
-        # shap_values shape for PyTorch: list of length 10 (classes). Each is (10_samples, 1, 28, 28)
-        # We take absolute values and average across classes, samples, and channels to get a 28x28 heat map
-        shap_numpy = np.abs(np.array(shap_values)) 
-        global_importance = np.mean(shap_numpy, axis=(0, 1, 2)) # Shape becomes (28, 28)
+#         # Run Real SHAP DeepExplainer
+#         explainer = shap.DeepExplainer(model, background)
+#         shap_values = explainer.shap_values(test_samples)
 
-        # Let's map this: Does the model care about the center (the digit) or the edges (background noise)?
-        center_mask = np.zeros((28, 28))
-        center_mask[7:21, 7:21] = 1  # The 14x14 center pixels
+#         # TRANSLATE TO LLM TEXT: Aggregate spatial importance
+#         # shap_values shape for PyTorch: list of length 10 (classes). Each is (10_samples, 1, 28, 28)
+#         # We take absolute values and average across classes, samples, and channels to get a 28x28 heat map
+#         shap_numpy = np.abs(np.array(shap_values)) 
+#         global_importance = np.mean(shap_numpy, axis=(0, 1, 2)) # Shape becomes (28, 28)
+
+#         # Let's map this: Does the model care about the center (the digit) or the edges (background noise)?
+#         center_mask = np.zeros((28, 28))
+#         center_mask[7:21, 7:21] = 1  # The 14x14 center pixels
         
-        center_importance = np.sum(global_importance * center_mask)
-        edge_importance = np.sum(global_importance * (1 - center_mask))
-        total_importance = center_importance + edge_importance
+#         center_importance = np.sum(global_importance * center_mask)
+#         edge_importance = np.sum(global_importance * (1 - center_mask))
+#         total_importance = center_importance + edge_importance
         
-        center_pct = (center_importance / total_importance) * 100
-        edge_pct = (edge_importance / total_importance) * 100
+#         center_pct = (center_importance / total_importance) * 100
+#         edge_pct = (edge_importance / total_importance) * 100
         
-        return (f"SHAP Spatial Execution Complete. "
-                f"Feature Importance Distribution: "
-                f"Center Region (14x14): {center_pct:.1f}% | Edge Region: {edge_pct:.1f}%. "
-                f"(If edges hold high importance > 20%, the model is memorizing background noise instead of the object).")
+#         return (f"SHAP Spatial Execution Complete. "
+#                 f"Feature Importance Distribution: "
+#                 f"Center Region (14x14): {center_pct:.1f}% | Edge Region: {edge_pct:.1f}%. "
+#                 f"(If edges hold high importance > 20%, the model is memorizing background noise instead of the object).")
                 
-    except Exception as e:
-        return f"SHAP Analysis failed due to: {str(e)}"
+#     except Exception as e:
+#         return f"SHAP Analysis failed due to: {str(e)}"
 
     
 def get_framework_docs_vector():
     
     # You can add any PyTorch or TensorFlow documentation URLs here.
     # We are targeting common debugging pain points (Optimization, Dropout, Loss functions, Imbalance)
-    urls =[
-        "https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html",
+    # urls =[
+    #     "https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html",
+    #     "https://pytorch.org/docs/stable/optim.html",
+    #     "https://pytorch.org/docs/stable/generated/torch.nn.Dropout.html",
+    #     "https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html",
+    #     "https://pytorch.org/docs/stable/notes/randomness.html",
+    #     "https://pytorch.org/docs/stable/data.html" # Covers DataLoaders and Samplers
+    # ]
+    
+    urls = [
+
+        # Core
+        "https://docs.pytorch.org/docs/stable/index.html",
+
+        # Optimization
         "https://pytorch.org/docs/stable/optim.html",
-        "https://pytorch.org/docs/stable/generated/torch.nn.Dropout.html",
+        "https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html",
+
+        # Autograd
+        "https://pytorch.org/docs/stable/autograd.html",
+        "https://pytorch.org/docs/stable/notes/autograd.html",
+
+        # Modules
+        "https://pytorch.org/docs/stable/nn.html",
+        "https://pytorch.org/docs/stable/generated/torch.nn.Module.html",
+        "https://pytorch.org/docs/stable/nn.functional.html",
+        "https://pytorch.org/docs/stable/nn.init.html",
+
+        # Losses
         "https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html",
+        "https://pytorch.org/docs/stable/generated/torch.nn.BCEWithLogitsLoss.html",
+        "https://pytorch.org/docs/stable/generated/torch.nn.MSELoss.html",
+
+        # Data
+        "https://pytorch.org/docs/stable/data.html",
+
+        # CUDA
+        "https://pytorch.org/docs/stable/cuda.html",
+        "https://pytorch.org/docs/stable/notes/cuda.html",
+
+        # AMP
+        "https://pytorch.org/docs/stable/amp.html",
+
+        # Reproducibility
         "https://pytorch.org/docs/stable/notes/randomness.html",
-        "https://pytorch.org/docs/stable/data.html" # Covers DataLoaders and Samplers
+        "https://pytorch.org/docs/stable/notes/reproducibility.html",
+
+        # Serialization
+        "https://pytorch.org/docs/stable/notes/serialization.html",
+
+        # Numerical
+        "https://pytorch.org/docs/stable/notes/numerical_accuracy.html",
+
+        # Broadcasting
+        "https://pytorch.org/docs/stable/notes/broadcasting.html",
+
+        # Profiling
+        "https://pytorch.org/docs/stable/profiler.html",
+
+        # Distributed
+        "https://pytorch.org/docs/stable/distributed.html",
+
+        # Tensorboard
+        "https://pytorch.org/docs/stable/tensorboard.html",
+
     ]
     
     loader = WebBaseLoader(urls)
@@ -135,7 +194,6 @@ def get_framework_docs_vector():
     )
     
     splits = text_splitter.split_documents(docs)
-    
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     vector_store = FAISS.from_documents(splits, embeddings)
     return vector_store
@@ -190,3 +248,4 @@ def search_db_files(query): ##for categorical-routing
     
     return "\n\n".join(doc.page_content for doc in ret_docs)
     
+### Tool in data-distribution-info / model-architechture info

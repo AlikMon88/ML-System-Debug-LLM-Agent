@@ -17,7 +17,7 @@ def train_dummy_model():
     
     for epoch in range(1, 21):
         
-        train_loss = train_loss * 0.85 
+        train_loss = train_loss * -1.0 
         # Val loss goes down, then spikes after epoch 10 (Overfitting)
         val_loss = val_loss * 0.88 if epoch < 10 else val_loss * 1.15 
         

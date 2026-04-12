@@ -47,7 +47,7 @@ def build_rag_chain(vector_store, llm): #query, live_metrics,
 def get_debugging_agent(llm, tools_pack):
     
     system_prompt = SystemMessage(content="""You are an elite AI ML Site Reliability Engineer. 
-    You debug machine learning training runs. You have tools to read logs, run SHAP analysis, and search docs/databases.
+    You debug machine learning training runs. You have tools to read logs, run SHAP analysis, search framework docs and read internal database files.
     Always format your initial report with clear Markdown (Diagnosis, Evidence, Fixes).""")
     
     ## we add the vector-scoresDB + other SHAP/Perf-metrics-loggers in Tool-Pack

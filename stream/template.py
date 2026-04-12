@@ -68,7 +68,7 @@ def stream_frontend_parallel(load_llm):
 
     if 'agent' not in st.session_state:
         ## RAG-agent-call / creates OOS states
-        tools_pack = [read_training_logs, run_shap_analysis, search_db_files, search_framework_docs]
+        tools_pack = [read_training_logs, run_shap_analysis, search_db_files, main_search_framework_docs]
         st.session_state.agent = get_debugging_agent(llm, tools_pack=tools_pack)
         st.session_state.chat_history = []
     
@@ -76,10 +76,11 @@ def stream_frontend_parallel(load_llm):
         st.session_state.agent_call = True   
         
         intitial_instruction = """A training run just finished.
-        1. Read the training logs.
+        1. Read the training logs. 
         2. If you see an anamoly, run the required tools.
         3. Query the framework docs and internal db files for a solution.
-        4. Generate a comphrehensive root cause analysis report.
+        4. Generate a paragraph report on findings from the training logs. 
+        5. Generate a comphrehensive root cause analysis report.
         """
         
         with st.status("Parallel: AI Agent analyzing the recent training run ... ", expanded=True) as status:
