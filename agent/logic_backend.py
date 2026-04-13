@@ -4,6 +4,16 @@ import os
 import numpy as np
 from data.load import *
 from rag.embed import *
+from model.model_arch.simple_nn import *
+import shap
+from sklearn.metrics import classification_report
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader, Subset
+
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
@@ -49,68 +59,59 @@ def read_training_logs(filepath: str = "model/logs/training_logs.json"):
 
 
 # @tool
-# def fetch_telemetry_db(db_path: str = "telemetry.db") -> str:
-#     """Reads the actual SQLite database to fetch training losses and gradient norms."""
-#     if not os.path.exists(db_path):
-#         return "Error: Database not found."
-    
-#     conn = sqlite3.connect(db_path)
-#     df = pd.read_sql_query("SELECT * FROM metrics", conn)
-#     return "Training Telemetry Database Outputs:\n" + df.to_string()
+# def run_shap_analysis(model_path: str = "model.pt"):
+#     """Runs SHAP feature importance analysis on a saved model checkpoint."""
+#     # Simulating a heavy SHAP computation
+#     return """SHAP Execution Complete: 
+#     - Feature 'pixel_cluster_center' importance: 88% (Abnormally high)
+#     - Feature 'edges' importance: 2%
+#     Conclusion: Model is ignoring spatial context and over-relying on center pixels (Memorization/Overfitting)."""
+
 
 @tool
-def run_shap_analysis(model_path: str = "model.pt"):
-    """Runs SHAP feature importance analysis on a saved model checkpoint."""
-    # Simulating a heavy SHAP computation
-    return """SHAP Execution Complete: 
-    - Feature 'pixel_cluster_center' importance: 88% (Abnormally high)
-    - Feature 'edges' importance: 2%
-    Conclusion: Model is ignoring spatial context and over-relying on center pixels (Memorization/Overfitting)."""
-
-# @tool
-# def main_run_shap_analysis(model_path: str = "model.pth"):
-#     """Runs actual SHAP DeepExplainer to identify which image regions drive model predictions."""
-#     try:
+def main_run_shap_analysis(model_path: str = "model/models_save/model.pth"):
+    """Runs actual SHAP DeepExplainer to identify which image regions drive model predictions."""
+    try:
         
-#         model = SimpleNN()
-#         model.load_state_dict(torch.load(model_path, weights_only=True))
-#         model.eval()
+        model = SimpleNN()
+        model.load_state_dict(torch.load(model_path, weights_only=True))
+        model.eval()
 
-#         # Load Sample Data (100 background samples, 10 test samples to keep it fast)
-#         transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
-#         test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+        # Load Sample Data (100 background samples, 10 test samples to keep it fast)
+        transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+        test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
         
-#         background = torch.stack([test_dataset[i][0] for i in range(100)])
-#         test_samples = torch.stack([test_dataset[i][0] for i in range(100, 110)])
+        background = torch.stack([test_dataset[i][0] for i in range(100)])
+        test_samples = torch.stack([test_dataset[i][0] for i in range(100, 110)])
 
-#         # Run Real SHAP DeepExplainer
-#         explainer = shap.DeepExplainer(model, background)
-#         shap_values = explainer.shap_values(test_samples)
+        # Run Real SHAP DeepExplainer
+        explainer = shap.DeepExplainer(model, background)
+        shap_values = explainer.shap_values(test_samples)
 
-#         # TRANSLATE TO LLM TEXT: Aggregate spatial importance
-#         # shap_values shape for PyTorch: list of length 10 (classes). Each is (10_samples, 1, 28, 28)
-#         # We take absolute values and average across classes, samples, and channels to get a 28x28 heat map
-#         shap_numpy = np.abs(np.array(shap_values)) 
-#         global_importance = np.mean(shap_numpy, axis=(0, 1, 2)) # Shape becomes (28, 28)
+        # TRANSLATE TO LLM TEXT: Aggregate spatial importance
+        # shap_values shape for PyTorch: list of length 10 (classes). Each is (10_samples, 1, 28, 28)
+        # We take absolute values and average across classes, samples, and channels to get a 28x28 heat map
+        shap_numpy = np.abs(np.array(shap_values)) 
+        global_importance = np.mean(shap_numpy, axis=(0, 1, 2)) # Shape becomes (28, 28)
 
-#         # Let's map this: Does the model care about the center (the digit) or the edges (background noise)?
-#         center_mask = np.zeros((28, 28))
-#         center_mask[7:21, 7:21] = 1  # The 14x14 center pixels
+        # Let's map this: Does the model care about the center (the digit) or the edges (background noise)?
+        center_mask = np.zeros((28, 28))
+        center_mask[7:21, 7:21] = 1  # The 14x14 center pixels
         
-#         center_importance = np.sum(global_importance * center_mask)
-#         edge_importance = np.sum(global_importance * (1 - center_mask))
-#         total_importance = center_importance + edge_importance
+        center_importance = np.sum(global_importance * center_mask)
+        edge_importance = np.sum(global_importance * (1 - center_mask))
+        total_importance = center_importance + edge_importance
         
-#         center_pct = (center_importance / total_importance) * 100
-#         edge_pct = (edge_importance / total_importance) * 100
+        center_pct = (center_importance / total_importance) * 100
+        edge_pct = (edge_importance / total_importance) * 100
         
-#         return (f"SHAP Spatial Execution Complete. "
-#                 f"Feature Importance Distribution: "
-#                 f"Center Region (14x14): {center_pct:.1f}% | Edge Region: {edge_pct:.1f}%. "
-#                 f"(If edges hold high importance > 20%, the model is memorizing background noise instead of the object).")
+        return (f"SHAP Spatial Execution Complete. "
+                f"Feature Importance Distribution: "
+                f"Center Region (14x14): {center_pct:.1f}% | Edge Region: {edge_pct:.1f}%. "
+                f"(If edges hold high importance > 20%, the model is memorizing background noise instead of the object).")
                 
-#     except Exception as e:
-#         return f"SHAP Analysis failed due to: {str(e)}"
+    except Exception as e:
+        return f"SHAP Analysis failed due to: {str(e)}"
 
     
 def get_framework_docs_vector():
@@ -198,13 +199,6 @@ def get_framework_docs_vector():
     vector_store = FAISS.from_documents(splits, embeddings)
     return vector_store
 
-# @tool
-# def search_framework_docs(query: str):
-#     """Searches PyTorch/TensorFlow documentation for fixes to ML issues."""
-#     # Simulating a FAISS vector DB retrieval
-#     if "overfit" in query.lower() or "val loss" in query.lower():
-#         return "DocSnippet [PyTorch]: To combat overfitting and memorization, apply `nn.Dropout(p=0.5)` to fully connected layers and utilize `torchvision.transforms` for data augmentation."
-#     return "Nothing to retrieve from framework docs." 
 
 @tool
 def main_search_framework_docs(query: str):
@@ -249,3 +243,28 @@ def search_db_files(query): ##for categorical-routing
     return "\n\n".join(doc.page_content for doc in ret_docs)
     
 ### Tool in data-distribution-info / model-architechture info
+
+@tool
+def evaluate_model_per_class(model_path: str = "model/model_saves/model.pth"):
+    """Loads the saved PyTorch model, runs inference on the balanced MNIST test set, and generates a per-class precision/recall report."""
+    
+    model = SimpleNN()
+    model.load_state_dict(torch.load(model_path, weights_only=True))
+    model.eval()
+
+    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+    test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+    test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
+
+    all_preds = []
+    all_targets =[]
+
+    with torch.no_grad():
+        for data, target in test_loader:
+            output = model(data)
+            preds = output.argmax(dim=1)
+            all_preds.extend(preds.numpy())
+            all_targets.extend(target.numpy())
+
+    report = classification_report(all_targets, all_preds, zero_division=0)
+    return f"Model Evaluation Report (Scikit-Learn):\n{report}"
