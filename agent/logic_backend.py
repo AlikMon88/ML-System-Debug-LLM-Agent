@@ -7,6 +7,8 @@ from rag.embed import *
 from model.model_arch.simple_nn import *
 import shap
 from sklearn.metrics import classification_report
+from pprint import pprint
+import inspect
 
 import torch
 import torch.nn as nn
@@ -58,16 +60,6 @@ def read_training_logs(filepath: str = "model/logs/training_logs.json"):
     return json.dumps(data)
 
 
-# @tool
-# def run_shap_analysis(model_path: str = "model.pt"):
-#     """Runs SHAP feature importance analysis on a saved model checkpoint."""
-#     # Simulating a heavy SHAP computation
-#     return """SHAP Execution Complete: 
-#     - Feature 'pixel_cluster_center' importance: 88% (Abnormally high)
-#     - Feature 'edges' importance: 2%
-#     Conclusion: Model is ignoring spatial context and over-relying on center pixels (Memorization/Overfitting)."""
-
-
 @tool
 def main_run_shap_analysis(model_path: str = "model/models_save/model.pth"):
     """Runs actual SHAP DeepExplainer to identify which image regions drive model predictions."""
@@ -84,7 +76,6 @@ def main_run_shap_analysis(model_path: str = "model/models_save/model.pth"):
         background = torch.stack([test_dataset[i][0] for i in range(100)])
         test_samples = torch.stack([test_dataset[i][0] for i in range(100, 110)])
 
-        # Run Real SHAP DeepExplainer
         explainer = shap.DeepExplainer(model, background)
         shap_values = explainer.shap_values(test_samples)
 
@@ -92,7 +83,9 @@ def main_run_shap_analysis(model_path: str = "model/models_save/model.pth"):
         # shap_values shape for PyTorch: list of length 10 (classes). Each is (10_samples, 1, 28, 28)
         # We take absolute values and average across classes, samples, and channels to get a 28x28 heat map
         shap_numpy = np.abs(np.array(shap_values)) 
-        global_importance = np.mean(shap_numpy, axis=(0, 1, 2)) # Shape becomes (28, 28)
+        ## avg-across-the-classes too
+        shap_numpy = np.mean(shap_numpy, axis=-1)
+        global_importance = np.mean(shap_numpy, axis=(0, 1)) # Shape becomes (28, 28)
 
         # Let's map this: Does the model care about the center (the digit) or the edges (background noise)?
         center_mask = np.zeros((28, 28))
@@ -243,6 +236,14 @@ def search_db_files(query): ##for categorical-routing
     return "\n\n".join(doc.page_content for doc in ret_docs)
     
 ### Tool in data-distribution-info / model-architechture info
+@tool 
+def model_arch_info():
+    """Provides the Model Architecture for model contextualization"""
+    
+    model = SimpleNN()
+    code_str = inspect.getsource(inspect.getmodule(model))
+    return f"Model-Architecture: \n{code_str}"
+
 
 @tool
 def evaluate_model_per_class(model_path: str = "model/model_saves/model.pth"):
@@ -268,3 +269,67 @@ def evaluate_model_per_class(model_path: str = "model/model_saves/model.pth"):
 
     report = classification_report(all_targets, all_preds, zero_division=0)
     return f"Model Evaluation Report (Scikit-Learn):\n{report}"
+
+if __name__ == "__main__":
+    print('Running__Main__Tooling__')
+    # def main_run_shap_analysis_nontool(model_path: str = "model/models_save/model.pth"):
+    #     """Runs actual SHAP DeepExplainer to identify which image regions drive model predictions."""
+    #     try:
+            
+    #         model = SimpleNN()
+    #         model.load_state_dict(torch.load(model_path, weights_only=True))
+    #         model.eval()
+
+    #         # Load Sample Data (100 background samples, 10 test samples to keep it fast)
+    #         transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+    #         test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+            
+    #         background = torch.stack([test_dataset[i][0] for i in range(100)])
+    #         test_samples = torch.stack([test_dataset[i][0] for i in range(100, 120)])
+    #         print(background.shape, test_samples.shape)
+
+    #         explainer = shap.DeepExplainer(model, background)
+    #         shap_values = explainer.shap_values(test_samples)
+
+    #         # TRANSLATE TO LLM TEXT: Aggregate spatial importance
+    #         # shap_values shape for PyTorch: list of length 10 (classes). Each is (n_samples, 1, 28, 28, n_class) // (i, :, :, :, j) >> i-th sample n-th class SHAP-values
+    #         # We take absolute values and average across classes, samples, and channels to get a 28x28 heat map
+    #         shap_numpy = np.abs(np.array(shap_values)) 
+    #         ## avg-across-the-classes too
+    #         shap_numpy = np.mean(shap_numpy, axis=-1)
+
+    #         global_importance = np.mean(shap_numpy, axis=(0, 1)) # Shape becomes (28, 28) 
+            
+    #         # Let's map this: Does the model care about the center (the digit) or the edges (background noise)?
+    #         center_mask = np.zeros((28, 28))
+    #         center_mask[7:21, 7:21] = 1  # The 14x14 center pixels
+            
+    #         center_importance = np.sum(global_importance * center_mask)
+    #         edge_importance = np.sum(global_importance * (1 - center_mask))
+    #         total_importance = center_importance + edge_importance
+            
+    #         center_pct = (center_importance / total_importance) * 100
+    #         edge_pct = (edge_importance / total_importance) * 100
+            
+    #         return (f"SHAP Spatial Execution Complete. "
+    #                 f"Feature Importance Distribution: "
+    #                 f"Center Region (14x14): {center_pct:.1f}% | Edge Region: {edge_pct:.1f}%. "
+    #                 f"(If edges hold high importance > 20%, the model is memorizing background noise instead of the object).")
+                    
+    #     except Exception as e:
+    #         return f"SHAP Analysis failed due to: {str(e)}"
+        
+    # print('main-shap-test-START')
+    # pprint(main_run_shap_analysis_nontool())
+    # print('main-shap-test-END')
+    
+    # def m_arch():
+    #     model = SimpleNN()
+    #     code_str_1 = inspect.getsource(model.__class__)
+    #     print(code_str_1)
+        
+    #     code_str_2 = inspect.getsource(inspect.getmodule(model))
+    #     print(code_str_2)
+    
+    # pprint(m_arch())
+        

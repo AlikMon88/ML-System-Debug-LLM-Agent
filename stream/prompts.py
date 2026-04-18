@@ -435,23 +435,26 @@ def get_human_instruction_e4():
     are suspected:
 
     Call:
-
+    model_arch_info
+    
+    3. To get model architecture for model function contexualization
+    
     evaluate_model_per_class
 
-    3. If model reasoning or feature behavior
+    4. If model reasoning or feature behavior
     is unclear:
 
     Call:
 
     main_run_shap_analysis
 
-    4. If debugging guidance is required:
+    5. If debugging guidance is required:
 
     Call:
 
     search_db_files
 
-    5. If framework behavior is unclear:
+    6. If framework behavior is unclear:
 
     Call:
 

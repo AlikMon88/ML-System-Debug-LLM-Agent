@@ -30,7 +30,7 @@ def train_imbalanced_mnist():
     for idx, (_, label) in enumerate(full_train_dataset):
         if label == 0:
             skewed_indices.append(idx)
-        elif random.random() < 0.02:
+        elif random.random() < 0.005:
             skewed_indices.append(idx)
             
     train_dataset = Subset(full_train_dataset, skewed_indices)
