@@ -113,7 +113,7 @@ def train_imbalanced_mnist():
             "val_accuracy": round(val_acc, 4),
             "avg_grad_norm" : round(avg_grad_norm, 4)
         })
-        print(f"Epoch {epoch + 1}/{epochs_len + 1} - Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f}")
+        print(f"Epoch {epoch}/{epochs_len} - Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f}")
 
         with open("model/logs/training_logs.json", "w") as f:
             json.dump(logs, f, indent=4)
